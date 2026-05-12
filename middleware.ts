@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -25,11 +25,8 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Do not run code between createServerClient and getClaims().
-  // A simple mistake here can cause random user logouts.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Refresh session — required by @supabase/ssr to keep the session alive.
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Unauthenticated → /login
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
@@ -45,7 +42,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: return supabaseResponse as-is — do not create a new response
-  // object or strip cookies, or the session may desync.
   return supabaseResponse
+}
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/login'],
 }
