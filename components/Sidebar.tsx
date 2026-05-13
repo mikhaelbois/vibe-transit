@@ -1,17 +1,17 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import SignOutButton from './SignOutButton'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import SignOutButton from './SignOutButton';
 
 const navItems = [
   { href: '/dashboard/sync', label: 'Sync' },
   { href: '/dashboard/history', label: 'History' },
   { href: '/dashboard/data', label: 'Data' },
-]
+];
 
 export default function Sidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <aside className="w-48 bg-slate-900 border-r border-slate-800 flex flex-col min-h-screen flex-shrink-0">
@@ -20,7 +20,7 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 py-2">
         {navItems.map((item) => {
-          const active = pathname === item.href
+          const active = pathname === item.href;
           return (
             <Link
               key={item.href}
@@ -33,12 +33,12 @@ export default function Sidebar() {
             >
               {item.label}
             </Link>
-          )
+          );
         })}
       </nav>
       <div className="p-4 border-t border-slate-800">
         <SignOutButton />
       </div>
     </aside>
-  )
+  );
 }

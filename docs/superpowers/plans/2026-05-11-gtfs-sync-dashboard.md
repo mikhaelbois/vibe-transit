@@ -276,13 +276,13 @@ git commit -m "feat: add Supabase schema migration (sync_runs, stops, routes)"
 `lib/supabase/client.ts`:
 
 ```typescript
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr';
 
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  );
 }
 ```
 
@@ -291,11 +291,11 @@ export function createClient() {
 `lib/supabase/server.ts`:
 
 ```typescript
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export function createClient() {
-  const cookieStore = cookies()
+  const cookieStore = cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -303,21 +303,22 @@ export function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
-            )
-          } catch {
+            );
+          }
+          catch {
             // Called from a Server Component — safe to ignore.
             // Middleware handles session refresh.
           }
         },
       },
     }
-  )
+  );
 }
 ```
 
@@ -326,7 +327,7 @@ export function createClient() {
 `lib/supabase/service.ts`:
 
 ```typescript
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // Service role client bypasses RLS — use only in server-side API routes.
 // Never import this in client components or expose the key to the browser.
@@ -334,7 +335,7 @@ export function createServiceClient() {
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  );
 }
 ```
 
@@ -365,11 +366,12 @@ git commit -m "feat: add Supabase browser, server, and service role client utili
 `middleware.ts`:
 
 ```typescript
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -377,44 +379,44 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
+          );
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
-          )
+          );
         },
       },
     }
-  )
+  );
 
   // Refresh session — required by @supabase/ssr to keep the session alive.
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Unauthenticated → /login
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
   // Already authenticated → skip login page
   if (user && request.nextUrl.pathname === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard/sync'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard/sync';
+    return NextResponse.redirect(url);
   }
 
-  return supabaseResponse
+  return supabaseResponse;
 }
 
 export const config = {
   matcher: ['/dashboard/:path*', '/login'],
-}
+};
 ```
 
 - [ ] **Step 2: Verify TypeScript compiles**
@@ -470,10 +472,10 @@ export default function RootLayout({
 - [ ] **Step 2: Replace app/page.tsx with a redirect**
 
 ```typescript
-import { redirect } from 'next/navigation'
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  redirect('/dashboard/sync')
+  redirect('/dashboard/sync');
 }
 ```
 
@@ -740,8 +742,8 @@ git commit -m "feat: add dashboard shell with sidebar navigation and sign-out"
 - [ ] **Step 1: Create lib/gtfs/parse.ts**
 
 ```typescript
-import JSZip from 'jszip'
-import Papa from 'papaparse'
+import JSZip from 'jszip';
+import Papa from 'papaparse';
 
 // Types for the two GTFS tables implemented in this PoC.
 // TODO: Add types for trips, stop_times, calendar, calendar_dates, shapes,
@@ -749,51 +751,53 @@ import Papa from 'papaparse'
 //       as each table is added to the pipeline.
 
 export interface StopRow {
-  stop_id: string
-  stop_name: string | null
-  stop_lat: number | null
-  stop_lon: number | null
-  stop_desc: string | null
-  zone_id: string | null
+  stop_id: string;
+  stop_name: string | null;
+  stop_lat: number | null;
+  stop_lon: number | null;
+  stop_desc: string | null;
+  zone_id: string | null;
 }
 
 export interface RouteRow {
-  route_id: string
-  agency_id: string | null
-  route_short_name: string | null
-  route_long_name: string | null
-  route_type: number | null
-  route_color: string | null
+  route_id: string;
+  agency_id: string | null;
+  route_short_name: string | null;
+  route_long_name: string | null;
+  route_type: number | null;
+  route_color: string | null;
 }
 
 export interface ParsedGtfs {
-  stops: StopRow[]
-  routes: RouteRow[]
+  stops: StopRow[];
+  routes: RouteRow[];
 }
 
 export async function parseGtfsZip(buffer: Buffer): Promise<ParsedGtfs> {
-  const zip = await JSZip.loadAsync(buffer)
+  const zip = await JSZip.loadAsync(buffer);
 
   // TODO: Extract and parse additional GTFS files as tables are added:
   // trips.txt, stop_times.txt, calendar.txt, calendar_dates.txt,
   // shapes.txt, agency.txt, fare_attributes.txt, fare_rules.txt,
   // frequencies.txt, transfers.txt, feed_info.txt
 
-  const stopsFile = zip.file('stops.txt')
-  const routesFile = zip.file('routes.txt')
+  const stopsFile = zip.file('stops.txt');
+  const routesFile = zip.file('routes.txt');
 
-  if (!stopsFile) throw new Error('stops.txt not found in ZIP')
-  if (!routesFile) throw new Error('routes.txt not found in ZIP')
+  if (!stopsFile)
+    throw new Error('stops.txt not found in ZIP');
+  if (!routesFile)
+    throw new Error('routes.txt not found in ZIP');
 
   const [stopsText, routesText] = await Promise.all([
     stopsFile.async('string'),
     routesFile.async('string'),
-  ])
+  ]);
 
   return {
     stops: parseStops(stopsText),
     routes: parseRoutes(routesText),
-  }
+  };
 }
 
 function parseCsv(text: string): Record<string, string>[] {
@@ -801,30 +805,30 @@ function parseCsv(text: string): Record<string, string>[] {
   const result = Papa.parse<Record<string, string>>(text, {
     header: true,
     skipEmptyLines: true,
-  })
-  return result.data
+  });
+  return result.data;
 }
 
 function parseStops(text: string): StopRow[] {
-  return parseCsv(text).map((row) => ({
-    stop_id: row['stop_id'],
-    stop_name: row['stop_name'] || null,
-    stop_lat: row['stop_lat'] ? parseFloat(row['stop_lat']) : null,
-    stop_lon: row['stop_lon'] ? parseFloat(row['stop_lon']) : null,
-    stop_desc: row['stop_desc'] || null,
-    zone_id: row['zone_id'] || null,
-  }))
+  return parseCsv(text).map(row => ({
+    stop_id: row.stop_id,
+    stop_name: row.stop_name || null,
+    stop_lat: row.stop_lat ? Number.parseFloat(row.stop_lat) : null,
+    stop_lon: row.stop_lon ? Number.parseFloat(row.stop_lon) : null,
+    stop_desc: row.stop_desc || null,
+    zone_id: row.zone_id || null,
+  }));
 }
 
 function parseRoutes(text: string): RouteRow[] {
-  return parseCsv(text).map((row) => ({
-    route_id: row['route_id'],
-    agency_id: row['agency_id'] || null,
-    route_short_name: row['route_short_name'] || null,
-    route_long_name: row['route_long_name'] || null,
-    route_type: row['route_type'] ? parseInt(row['route_type'], 10) : null,
-    route_color: row['route_color'] || null,
-  }))
+  return parseCsv(text).map(row => ({
+    route_id: row.route_id,
+    agency_id: row.agency_id || null,
+    route_short_name: row.route_short_name || null,
+    route_long_name: row.route_long_name || null,
+    route_type: row.route_type ? Number.parseInt(row.route_type, 10) : null,
+    route_color: row.route_color || null,
+  }));
 }
 ```
 
@@ -853,10 +857,10 @@ git commit -m "feat: add GTFS ZIP + CSV parse utility (stops, routes)"
 - [ ] **Step 1: Create app/api/sync/route.ts**
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { createServiceClient } from '@/lib/supabase/service'
-import { parseGtfsZip } from '@/lib/gtfs/parse'
+import { createServerClient } from '@supabase/ssr';
+import { NextRequest, NextResponse } from 'next/server';
+import { parseGtfsZip } from '@/lib/gtfs/parse';
+import { createServiceClient } from '@/lib/supabase/service';
 
 // APPROACH: All-in-one Next.js API route.
 //
@@ -874,16 +878,16 @@ import { parseGtfsZip } from '@/lib/gtfs/parse'
 //   Requires additional infrastructure (Redis, worker process).
 //   See: https://docs.bullmq.io/
 
-const BATCH_SIZE = 1_000
+const BATCH_SIZE = 1_000;
 
 export async function POST(request: NextRequest) {
-  const start = Date.now()
-  const serviceClient = createServiceClient()
+  const start = Date.now();
+  const serviceClient = createServiceClient();
 
   // Extract the authenticated user for attribution.
   // Uses the anon client + session cookie — not the service role client.
-  let userId: string | null = null
-  let userEmail: string | null = null
+  let userId: string | null = null;
+  let userEmail: string | null = null;
 
   try {
     const supabase = createServerClient(
@@ -891,67 +895,81 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() { return request.cookies.getAll() },
+          getAll() { return request.cookies.getAll(); },
           setAll() {}, // No-op in API routes
         },
       }
-    )
-    const { data: { user } } = await supabase.auth.getUser()
-    userId = user?.id ?? null
-    userEmail = user?.email ?? null
-  } catch {
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+    userEmail = user?.email ?? null;
+  }
+  catch {
     // Non-fatal: sync proceeds without attribution if session extraction fails.
   }
 
   // --- Input handling ---
-  let buffer: Buffer
-  let sourceType: 'zip' | 'api'
-  let sourceUrl: string | null = null
+  let buffer: Buffer;
+  let sourceType: 'zip' | 'api';
+  let sourceUrl: string | null = null;
 
   try {
-    const contentType = request.headers.get('content-type') ?? ''
+    const contentType = request.headers.get('content-type') ?? '';
 
     if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData()
-      const file = formData.get('file') as File | null
-      if (!file) throw new Error('No file provided in form data')
-      buffer = Buffer.from(await file.arrayBuffer())
-      sourceType = 'zip'
-    } else {
-      const body = await request.json()
-      if (!body.url) throw new Error('No URL provided in request body')
-      sourceUrl = body.url as string
-      const response = await fetch(sourceUrl)
-      if (!response.ok) {
-        throw new Error(`Fetch failed: ${response.status} ${response.statusText}`)
-      }
-      buffer = Buffer.from(await response.arrayBuffer())
-      sourceType = 'api'
+      const formData = await request.formData();
+      const file = formData.get('file') as File | null;
+      if (!file)
+        throw new Error('No file provided in form data');
+      buffer = Buffer.from(await file.arrayBuffer());
+      sourceType = 'zip';
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown input error'
+    else {
+      const body = await request.json();
+      if (!body.url)
+        throw new Error('No URL provided in request body');
+      sourceUrl = body.url as string;
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
+      }
+      buffer = Buffer.from(await response.arrayBuffer());
+      sourceType = 'api';
+    }
+  }
+  catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown input error';
     await recordSyncRun(serviceClient, {
-      source_type: 'api', source_url: sourceUrl, status: 'error',
-      error_message: message, rows_inserted: null,
+      source_type: 'api',
+      source_url: sourceUrl,
+      status: 'error',
+      error_message: message,
+      rows_inserted: null,
       duration_ms: Date.now() - start,
-      triggered_by_user_id: userId, triggered_by_email: userEmail,
-    })
-    return NextResponse.json({ error: message }, { status: 400 })
+      triggered_by_user_id: userId,
+      triggered_by_email: userEmail,
+    });
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   // --- Parse ---
-  let parsed
+  let parsed;
   try {
-    parsed = await parseGtfsZip(buffer)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'ZIP parse error'
+    parsed = await parseGtfsZip(buffer);
+  }
+  catch (err) {
+    const message = err instanceof Error ? err.message : 'ZIP parse error';
     await recordSyncRun(serviceClient, {
-      source_type: sourceType!, source_url: sourceUrl, status: 'error',
-      error_message: message, rows_inserted: null,
+      source_type: sourceType!,
+      source_url: sourceUrl,
+      status: 'error',
+      error_message: message,
+      rows_inserted: null,
       duration_ms: Date.now() - start,
-      triggered_by_user_id: userId, triggered_by_email: userEmail,
-    })
-    return NextResponse.json({ error: message }, { status: 422 })
+      triggered_by_user_id: userId,
+      triggered_by_email: userEmail,
+    });
+    return NextResponse.json({ error: message }, { status: 422 });
   }
 
   // --- Truncate + insert ---
@@ -965,27 +983,33 @@ export async function POST(request: NextRequest) {
     //
     // FUTURE: Upsert using stable GTFS primary keys (stop_id, route_id, etc.)
     //   for incremental syncs without any downtime window.
-    const { error: truncateError } = await serviceClient.rpc('truncate_gtfs_tables')
-    if (truncateError) throw new Error(`Truncate failed: ${truncateError.message}`)
+    const { error: truncateError } = await serviceClient.rpc('truncate_gtfs_tables');
+    if (truncateError)
+      throw new Error(`Truncate failed: ${truncateError.message}`);
 
     // TODO: Add batchInsert calls for additional tables as they are implemented.
-    await batchInsert(serviceClient, 'stops', parsed.stops)
-    await batchInsert(serviceClient, 'routes', parsed.routes)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Database error'
+    await batchInsert(serviceClient, 'stops', parsed.stops);
+    await batchInsert(serviceClient, 'routes', parsed.routes);
+  }
+  catch (err) {
+    const message = err instanceof Error ? err.message : 'Database error';
     await recordSyncRun(serviceClient, {
-      source_type: sourceType!, source_url: sourceUrl, status: 'error',
-      error_message: message, rows_inserted: null,
+      source_type: sourceType!,
+      source_url: sourceUrl,
+      status: 'error',
+      error_message: message,
+      rows_inserted: null,
       duration_ms: Date.now() - start,
-      triggered_by_user_id: userId, triggered_by_email: userEmail,
-    })
-    return NextResponse.json({ error: message }, { status: 500 })
+      triggered_by_user_id: userId,
+      triggered_by_email: userEmail,
+    });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const rowsInserted = {
     stops: parsed.stops.length,
     routes: parsed.routes.length,
-  }
+  };
 
   const syncRun = await recordSyncRun(serviceClient, {
     source_type: sourceType!,
@@ -996,9 +1020,9 @@ export async function POST(request: NextRequest) {
     duration_ms: Date.now() - start,
     triggered_by_user_id: userId,
     triggered_by_email: userEmail,
-  })
+  });
 
-  return NextResponse.json({ syncRun, rowsInserted })
+  return NextResponse.json({ syncRun, rowsInserted });
 }
 
 async function batchInsert(
@@ -1007,21 +1031,22 @@ async function batchInsert(
   rows: Record<string, unknown>[]
 ) {
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE)
-    const { error } = await client.from(table).insert(batch)
-    if (error) throw new Error(`Insert into ${table} failed: ${error.message}`)
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const { error } = await client.from(table).insert(batch);
+    if (error)
+      throw new Error(`Insert into ${table} failed: ${error.message}`);
   }
 }
 
-type SyncRunInput = {
-  source_type: 'zip' | 'api'
-  source_url: string | null
-  status: 'success' | 'error'
-  error_message: string | null
-  rows_inserted: Record<string, number> | null
-  duration_ms: number
-  triggered_by_user_id: string | null
-  triggered_by_email: string | null
+interface SyncRunInput {
+  source_type: 'zip' | 'api';
+  source_url: string | null;
+  status: 'success' | 'error';
+  error_message: string | null;
+  rows_inserted: Record<string, number> | null;
+  duration_ms: number;
+  triggered_by_user_id: string | null;
+  triggered_by_email: string | null;
 }
 
 async function recordSyncRun(
@@ -1032,9 +1057,10 @@ async function recordSyncRun(
     .from('sync_runs')
     .insert(data)
     .select()
-    .single()
-  if (error) console.error('Failed to record sync run:', error.message)
-  return run
+    .single();
+  if (error)
+    console.error('Failed to record sync run:', error.message);
+  return run;
 }
 ```
 

@@ -1,71 +1,78 @@
-'use client'
+'use client';
 
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react';
 
-type SyncMode = 'zip' | 'api'
+type SyncMode = 'zip' | 'api';
 
 interface SyncResult {
-  success: boolean
-  message: string
+  success: boolean;
+  message: string;
 }
 
 export default function SyncForm() {
-  const [mode, setMode] = useState<SyncMode>('zip')
-  const [apiUrl, setApiUrl] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [dragging, setDragging] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<SyncResult | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [mode, setMode] = useState<SyncMode>('zip');
+  const [apiUrl, setApiUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<SyncResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSync() {
-    setLoading(true)
-    setResult(null)
+    setLoading(true);
+    setResult(null);
 
     try {
-      let response: Response
+      let response: Response;
 
       if (mode === 'zip') {
-        if (!file) throw new Error('Please select a ZIP file')
-        const formData = new FormData()
-        formData.append('file', file)
-        response = await fetch('/api/sync', { method: 'POST', body: formData })
-      } else {
-        if (!apiUrl.trim()) throw new Error('Please enter a URL')
+        if (!file)
+          throw new Error('Please select a ZIP file');
+        const formData = new FormData();
+        formData.append('file', file);
+        response = await fetch('/api/sync', { method: 'POST', body: formData });
+      }
+      else {
+        if (!apiUrl.trim())
+          throw new Error('Please enter a URL');
         response = await fetch('/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: apiUrl.trim() }),
-        })
+        });
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        setResult({ success: false, message: data.error ?? 'Sync failed' })
-      } else {
+        setResult({ success: false, message: data.error ?? 'Sync failed' });
+      }
+      else {
         const counts = Object.entries(
-          data.rowsInserted as Record<string, number>
+          data.rowsInserted as Record<string, number>,
         )
           .map(([table, count]) => `${count.toLocaleString()} ${table}`)
-          .join(', ')
-        setResult({ success: true, message: `Synced: ${counts}` })
+          .join(', ');
+        setResult({ success: true, message: `Synced: ${counts}` });
       }
-    } catch (err) {
+    }
+    catch (err) {
       setResult({
         success: false,
         message: err instanceof Error ? err.message : 'Unknown error',
-      })
-    } finally {
-      setLoading(false)
+      });
+    }
+    finally {
+      setLoading(false);
     }
   }
 
   function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(false)
-    const dropped = e.dataTransfer.files[0]
-    if (dropped?.name.endsWith('.zip')) setFile(dropped)
+    e.preventDefault();
+    setDragging(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped?.name.endsWith('.zip'))
+      setFile(dropped);
   }
 
   return (
@@ -76,10 +83,13 @@ export default function SyncForm() {
 
       {/* Mode toggle */}
       <div className="flex gap-2">
-        {(['zip', 'api'] as const).map((m) => (
+        {(['zip', 'api'] as const).map(m => (
           <button
             key={m}
-            onClick={() => { setMode(m); setResult(null) }}
+            onClick={() => {
+              setMode(m);
+              setResult(null);
+            }}
             className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
               mode === m
                 ? 'bg-violet-600 text-white'
@@ -92,43 +102,50 @@ export default function SyncForm() {
       </div>
 
       {/* Input area */}
-      {mode === 'zip' ? (
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
-            dragging
-              ? 'border-violet-500 bg-violet-500/10'
-              : 'border-slate-700 hover:border-slate-500'
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".zip"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          {file ? (
-            <p className="text-sm text-slate-300">{file.name}</p>
-          ) : (
-            <>
-              <p className="text-sm text-slate-400">Drop a GTFS .zip here</p>
-              <p className="text-xs text-violet-400 mt-1">or click to browse</p>
-            </>
+      {mode === 'zip'
+        ? (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
+                dragging
+                  ? 'border-violet-500 bg-violet-500/10'
+                  : 'border-slate-700 hover:border-slate-500'
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".zip"
+                className="hidden"
+                onChange={e => setFile(e.target.files?.[0] ?? null)}
+              />
+              {file
+                ? (
+                    <p className="text-sm text-slate-300">{file.name}</p>
+                  )
+                : (
+                    <>
+                      <p className="text-sm text-slate-400">Drop a GTFS .zip here</p>
+                      <p className="text-xs text-violet-400 mt-1">or click to browse</p>
+                    </>
+                  )}
+            </div>
+          )
+        : (
+            <input
+              type="url"
+              value={apiUrl}
+              onChange={e => setApiUrl(e.target.value)}
+              placeholder="https://example.com/gtfs.zip"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-violet-500 placeholder-slate-600"
+            />
           )}
-        </div>
-      ) : (
-        <input
-          type="url"
-          value={apiUrl}
-          onChange={(e) => setApiUrl(e.target.value)}
-          placeholder="https://example.com/gtfs.zip"
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-violet-500 placeholder-slate-600"
-        />
-      )}
 
       {/* Sync button */}
       <button
@@ -153,5 +170,5 @@ export default function SyncForm() {
         </div>
       )}
     </div>
-  )
+  );
 }
