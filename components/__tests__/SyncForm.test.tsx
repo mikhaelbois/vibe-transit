@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SyncForm from '@/components/SyncForm';
 
 describe('SyncForm', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
   afterEach(() => {
-    cleanup();
+    vi.unstubAllGlobals();
   });
 
   it('renders in ZIP mode by default', () => {
@@ -40,7 +40,7 @@ describe('SyncForm', () => {
     const fetchPromise = new Promise(resolve => {
       resolveFetch = resolve;
     });
-    globalThis.fetch = vi.fn().mockReturnValue(fetchPromise);
+    vi.mocked(fetch).mockReturnValue(fetchPromise);
 
     render(<SyncForm />);
 
@@ -66,10 +66,10 @@ describe('SyncForm', () => {
   });
 
   it('shows success result pill with counts after successful fetch', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ rowsInserted: { stops: 100, routes: 20 } }),
-    });
+    } as Response);
 
     render(<SyncForm />);
 
@@ -91,10 +91,10 @@ describe('SyncForm', () => {
   });
 
   it('shows error pill when fetch responds with ok: false', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'Invalid ZIP' }),
-    });
+    } as Response);
 
     render(<SyncForm />);
 
@@ -109,7 +109,7 @@ describe('SyncForm', () => {
   });
 
   it('shows error pill when fetch throws an exception', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
+    vi.mocked(fetch).mockRejectedValue(new Error('Network failure'));
 
     render(<SyncForm />);
 
