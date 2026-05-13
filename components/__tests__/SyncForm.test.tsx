@@ -36,8 +36,8 @@ describe('SyncForm', () => {
 
   it('shows loading state while fetch is in progress', async () => {
     // Use a promise that never resolves so we can inspect the loading state
-    let resolveFetch!: (value: unknown) => void;
-    const fetchPromise = new Promise(resolve => {
+    let resolveFetch!: (value: Response | PromiseLike<Response>) => void;
+    const fetchPromise = new Promise<Response>(resolve => {
       resolveFetch = resolve;
     });
     vi.mocked(fetch).mockReturnValue(fetchPromise);
