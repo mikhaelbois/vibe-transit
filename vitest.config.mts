@@ -11,7 +11,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['app/**', 'components/**', 'lib/**'],
-      exclude: ['**/*.test.*', '**/*.spec.*', 'vitest.setup.ts', 'vitest.config.*'],
+      exclude: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*', 'vitest.setup.ts', 'vitest.config.*'],
     },
   },
 })
